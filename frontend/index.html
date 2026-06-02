@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Finanzas Personales</title>
+    <link rel="stylesheet" href="./styles.css">
+    <!-- Librería de Gráficos Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Dashboard de Finanzas Personales</h1>
+        </header>
+
+        <main class="dashboard-grid">
+            <!-- Sección del Historial de Transacciones -->
+            <section class="card transactions-section">
+                <h2>Historial de Movimientos</h2>
+                <ul id="transactions-list" class="list">
+                    <!-- JavaScript insertará los datos aquí -->
+                    <li class="loading">Cargando datos desde la API...</li>
+                </ul>
+            </section>
+
+            <!-- Sección del Gráfico -->
+            <section class="card chart-section">
+                <h2>Distribución de Gastos</h2>
+                <div class="chart-container">
+                    <canvas id="finance-chart"></canvas>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
