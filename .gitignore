@@ -1,0 +1,11 @@
+# Python (Entorno virtual y caché)
+__pycache__/
+*.pyc
+env/
+venv/
+.env
+
+
+# Frontend / Editores
+.vscode/
+.DS_Store
