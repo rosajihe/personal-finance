@@ -1,10 +1,19 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
+from sqlalchemy.orm import Session
+from typing import List
 
-app = FastAPI(title="API de Finanzas Personales")
+# Importamos nuestros módulos locales utilizando rutas relativas explícitas
+from .database import engine, Base, get_db
+from .models import TransactionModel
 
-# Habilitar CORS
+# Crear las tablas en la base de datos si no existen al arrancar el servidor
+Base.metadata.create_all(bind=engine)
+
+app = FastAPI(title="API de Finanzas Personales con SQLite")
+
+# Habilitar CORS para conectar con JavaScript
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -13,39 +22,38 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 🛠️ NUEVO: Modelo de Pydantic para validar los datos que envía el Frontend
-class Transaction(BaseModel):
+# Modelo de Pydantic para validar los datos que envía el Frontend (Igual al anterior)
+class TransactionSchema(BaseModel):
     description: str = Field(..., min_length=1, max_length=100)
-    amount: float = Field(..., gt=0)  # El monto debe ser mayor a 0
-    type: str  # "income" o "expense"
+    amount: float = Field(..., gt=0)
+    type: str
     category: str
 
-# Base de datos temporal en memoria
-transactions_db = [
-    {"id": 1, "description": "Salario", "amount": 2500.0, "type": "income", "category": "Trabajo"},
-    {"id": 2, "description": "Supermercado", "amount": 120.5, "type": "expense", "category": "Comida"},
-    {"id": 3, "description": "Suscripción Streaming", "amount": 15.0, "type": "expense", "category": "Entretenimiento"}
-]
+    class Config:
+        from_attributes = True
 
 @app.get("/")
 def read_root():
-    return {"status": "online"}
+    return {"status": "online", "database": "SQLite conectada"}
 
+# 🔄 Endpoint GET actualizado para leer desde SQLite
 @app.get("/api/transactions")
-def get_transactions():
-    return transactions_db
+def get_transactions(db: Session = Depends(get_db)):
+    """Obtiene todo el historial desde la base de datos real SQLite"""
+    transactions = db.query(TransactionModel).all()
+    return transactions
 
-# 🚀 NUEVO: Endpoint POST para recibir y almacenar nuevas transacciones
+# 🚀 Endpoint POST actualizado para escribir en SQLite
 @app.post("/api/transactions")
-def create_transaction(transaction: Transaction):
-    """Recibe un JSON del frontend, lo valida y lo guarda en la base de datos"""
-    # Convertir el objeto validado a un diccionario normal de Python
-    new_tx = transaction.model_dump()
-    
-    # Generar un ID de forma dinámica para el registro
-    new_tx["id"] = len(transactions_db) + 1
-    
-    # Guardar en nuestra lista (Base de datos temporal)
-    transactions_db.append(new_tx)
-    
-    return {"message": "Transacción registrada con éxito", "data": new_tx}
+def create_transaction(transaction: TransactionSchema, db: Session = Depends(get_db)):
+    """Valida el JSON, lo transforma en un registro SQL y lo persiste en el disco"""
+    db_transaction = TransactionModel(
+        description=transaction.description,
+        amount=transaction.amount,
+        type=transaction.type,
+        category=transaction.category
+    )
+    db.add(db_transaction)
+    db.commit()
+    db.refresh(db_transaction)
+    return {"message": "Transacción guardada en SQLite", "data": db_transaction}
