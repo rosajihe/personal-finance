@@ -1,4 +1,4 @@
-const API_URL = "http://127.0.0";
+const API_URL = "http://127.0.0.1:8000/api/transactions";
 
 // Función principal que arranca la aplicación
 async function init() {
@@ -43,9 +43,14 @@ function renderTransactions(transactions) {
 
 // Procesa los datos y genera el gráfico
 function renderChart(transactions) {
-    const ctx = document.getElementById('finance-chart').getContext('2d');
+    const canvas = document.getElementById('finance-chart');
+    const ctx = canvas.getContext('2d');
     
-    // Filtrar solo los gastos y agruparlos por categoría
+    // Si ya existe un gráfico previo, lo destruimos para evitar errores visuales al actualizar
+    if (financeChartInstance) {
+        financeChartInstance.destroy();
+    }
+    
     const expenses = transactions.filter(tx => tx.type === "expense");
     const categories = [...new Set(expenses.map(tx => tx.category))];
     
@@ -55,14 +60,14 @@ function renderChart(transactions) {
             .reduce((sum, tx) => sum + tx.amount, 0);
     });
 
-    // Crear el gráfico de tipo Dona (Doughnut)
-    new Chart(ctx, {
+    // Guardamos la nueva instancia en la variable global
+    financeChartInstance = new Chart(ctx, {
         type: 'doughnut',
         data: {
             labels: categories,
             datasets: [{
                 data: totalsByCategory,
-                backgroundColor: ['#e74c3c', '#3498db', '#f1c40f', '#9b59b6'],
+                backgroundColor: ['#e74c3c', '#3498db', '#f1c40f', '#9b59b6', '#1abc9c'],
                 borderWidth: 1
             }]
         },
@@ -72,6 +77,55 @@ function renderChart(transactions) {
         }
     });
 }
+
+
+// Variable global para almacenar la instancia del gráfico y poder destruirlo/recrearlo al actualizar datos
+let financeChartInstance = null;
+
+// Escuchar el envío del formulario
+// Escuchar el envío del formulario de manera asíncrona
+document.getElementById("finance-form").addEventListener("submit", async (e) => {
+    e.preventDefault(); 
+
+    // 1. Capturar los valores ingresados por el usuario
+    const description = document.getElementById("description").value;
+    const amount = parseFloat(document.getElementById("amount").value);
+    const type = document.getElementById("type").value;
+    const category = document.getElementById("category").value;
+
+    // 2. Crear el objeto JSON
+    const newTransaction = {
+        description: description,
+        amount: amount,
+        type: type,
+        category: category
+    };
+
+    try {
+        // 3. Hacer la petición POST de forma asíncrona enviando el JSON
+        const response = await fetch(API_URL, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(newTransaction)
+        });
+
+        if (response.ok) {
+            // 4. Si Python responde exitosamente, limpiamos el formulario
+            document.getElementById("finance-form").reset();
+            
+            // 5. Volvemos a ejecutar la función inicial para refrescar la lista y el gráfico al instante
+            await init(); 
+        } else {
+            alert("Error en el servidor al intentar guardar los datos.");
+        }
+
+    } catch (error) {
+        console.error("Error al enviar datos al backend:", error);
+        alert("No se pudo establecer conexión con el servidor de Python.");
+    }
+});
 
 // Ejecutar al cargar la página
 document.addEventListener("DOMContentLoaded", init);

@@ -65,11 +65,74 @@ h2 {
     font-weight: 500;
 }
 
-.income { color: var(--income-color); }
-.expense { color: var(--expense-color); }
+.income {
+    color: var(--income-color);
+}
+
+.expense {
+    color: var(--expense-color);
+}
 
 .chart-container {
     position: relative;
     height: 300px;
     width: 100%;
+}
+
+/* Estilos para el nuevo formulario */
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #555;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: var(--border-radius);
+    box-sizing: border-box;
+    font-size: 1rem;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #3498db;
+}
+
+.btn-submit {
+    width: 100%;
+    padding: 12px;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.btn-submit:hover {
+    background-color: #2980b9;
+}
+
+/* Ajuste al grid para soportar 3 columnas o mantenerse responsivo */
+@media (min-width: 900px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .chart-section {
+        grid-column: span 2;
+        /* El gráfico abarcará todo el ancho abajo */
+    }
 }
